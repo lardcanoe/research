@@ -1,0 +1,48 @@
+---
+- hosts:
+  - 127.0.0.1
+  connection: local
+  gather_facts: False
+
+  vars:
+    dnsdomain: mapkin.internal
+    instance_type: t1.micro
+    image: ami-cdc072a4
+    mail_from: Ansible
+    mail_to: root
+
+#  vars_prompt:
+#    grp_name: "What is this name of this new group (no spaces)?"
+
+  tasks:
+  - name: Create New Security Group
+    action: shell euca-add-group -d "${grp_name}" "${grp_name}"
+
+  - name: Add Ports to Security Group
+    action: shell euca-authorize -P tcp -p $item-$item -s 0.0.0.0/0 ${grp_name}
+    with_items: [ 22, 25, 80, 443 ]
+
+  - action: file dest="~/.ssh/${grp_name}.pem" state=absent
+
+  - name: Create New Key Pair
+    action: shell euca-add-keypair ${grp_name} > ~/.ssh/${grp_name}.pem
+
+  - name: Lock Key Pair
+    action: shell chmod 0600 ~/.ssh/${grp_name}.pem
+
+  - name: Add Key Pair to SSH
+    action: shell ssh-add ~/.ssh/${grp_name}.pem
+
+  - name: Launch New Server Instances
+    local_action: ec2
+        keypair=${grp_name}
+        group=${grp_name}
+        instance_type=${instance_type}
+        image=${image}
+        wait=true
+        user_data='{"servertype":"${item.type}","group":"${grp_name}","name":"${item.name}"}'
+    with_items:
+      - { name: app1, type: app }
+      - { name: app2, type: app }
+      - { name: db1, type: db }
+

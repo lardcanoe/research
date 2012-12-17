@@ -1,0 +1,43 @@
+---
+- hosts:
+  - tag_GroupType_${grp_name}-app
+  user: ubuntu
+  sudo: True
+  connection: paramiko
+  gather_facts: false
+
+  vars:
+    processor_count: 1
+    connections: "1024"
+
+  tasks:
+  - name: Install | python-software-properties
+    action: apt pkg='python-software-properties' state=installed
+
+  - name: Add | nginx repo
+    action: apt_repository repo=ppa:nginx/stable state=present
+
+  - name: Update | apt repo
+    action: command /usr/bin/apt-get update
+
+  - name: Install | nginx
+    action: apt pkg=nginx state=installed
+
+  - name: Write | nginx.conf
+    action: template src=../templates/nginx.j2 dest=/etc/nginx/nginx.conf
+    notify:
+    - Restart | nginx
+
+  - name: Obtain | user_data
+    action: userdata
+    register: ud
+
+#  - name: Install | Web templates
+#    action: template src=../templates/index.j2 dest=/var/www/ec2.html
+
+  - name: Start | nginx
+    action: service name=nginx state=started
+
+  handlers:
+  - name: Restart | nginx
+    action: service name=nginx state=restarted
