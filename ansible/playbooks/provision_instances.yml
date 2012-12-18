@@ -20,7 +20,7 @@
 
   - name: Add Ports to Security Group
     action: shell euca-authorize -P tcp -p $item-$item -s 0.0.0.0/0 ${grp_name}
-    with_items: [ 22, 25, 80, 443 ]
+    with_items: [ 22, 25, 80, 443, 8080 ]
 
   - action: file dest="~/.ssh/${grp_name}.pem" state=absent
 

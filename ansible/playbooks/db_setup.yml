@@ -5,15 +5,15 @@
   gather_facts: False
 
   tasks:
-  - name: ensure apt cache is up to date
+  - name: Update | apt cache
     action: apt update_cache=yes
 
-  - name: ensure packages are installed
-    action: apt pkg=$item
+  - name: Install | dependencies
+    action: apt pkg=${item}
     with_items:
-        - postgresql
-        - libpq-dev
-        - python-psycopg2
+      - postgresql
+      - libpq-dev
+      - python-psycopg2
 
 - hosts: tag_GroupType_${grp_name}-db
   user: ubuntu
@@ -21,17 +21,16 @@
   sudo_user: postgres
   gather_facts: False
 
-  vars:
-    dbname: myapp
-    dbuser: django
-    dbpassword: mysupersecreetpassword
+  vars_files:
+    - "../vars/db_common.yml"
+    - [ "../vars/db_${deployment}.yml" ]
 
   tasks:
-  - name: ensure database is created
-    action: postgresql_db db=$dbname
+  - name: Create | database
+    action: postgresql_db db="${dbname}"
 
-  - name: ensure user has access to database
-    action: postgresql_user db=$dbname user=$dbuser password=$dbpassword priv=ALL
+  - name: Allow | access to database
+    action: postgresql_user db="${dbname}" user="${dbuser}" password="${dbpassword}" priv=ALL
 
-  - name: ensure user does not have unnecessary privilege
-    action: postgresql_user user=$dbuser role_attr_flags=NOSUPERUSER,NOCREATEDB
+  - name: Check | user does not have unnecessary privilege
+    action: postgresql_user user="${dbuser}" role_attr_flags=NOSUPERUSER,NOCREATEDB

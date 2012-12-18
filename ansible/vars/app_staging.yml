@@ -1,0 +1,4 @@
+---
+processor_count: 4
+connections: 1024
+server_tokens: "on"

@@ -1,0 +1,33 @@
+---
+- hosts:
+  - tag_GroupType_${grp_name}-app
+  user: ubuntu
+  sudo: True
+  connection: paramiko
+  gather_facts: false
+
+  vars_files:
+    - "../vars/app_common.yml"
+    - [ "../vars/app_${deployment}.yml" ]
+
+  tasks:
+  - name: Stop | services
+    action: service name=${item} state=stopped
+    with_items:
+    - nginx
+    - uwsgi
+
+  - name: Create | /var/www
+    action: file path=/var/www state=directory owner=ubuntu group=ubuntu
+
+  - name: Copy | static
+    local_action: command rsync -a -e "ssh -i /root/.ssh/${grp_name}.pem" ../website/ ubuntu@${inventory_hostname}:/var/www
+
+  - name: Copy | django_site
+    local_action: command rsync -a -e "ssh -i /root/.ssh/${grp_name}.pem" ../django_site/ ubuntu@${inventory_hostname}:/opt/apps/test
+
+  - name: Start | services
+    action: service name=${item} state=started
+    with_items:
+    - uwsgi
+    - nginx    

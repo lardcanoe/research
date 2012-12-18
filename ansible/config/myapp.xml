@@ -1,0 +1,12 @@
+<uwsgi>
+    <master>true</master>
+    <processes>1</processes>
+    <vaccum>true</vaccum>
+    <chmod-socket>666</chmod-socket>
+    <socket>/tmp/%n.sock</socket>
+    <uid>www-data</uid>
+    <gid>www-data</gid>
+    <pythonpath>%d%n</pythonpath>
+    <module>%n</module>
+    <plugins>python</plugins>
+</uwsgi>

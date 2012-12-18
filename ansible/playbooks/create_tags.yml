@@ -10,4 +10,4 @@
     register: ud
 
   - name: Create New Name Tag
-    local_action: shell euca-create-tags $ec2_id --tag "Name=${ud.user_data.group}-${ud.user_data.name}" --tag "Group=${ud.user_data.group}" --tag "GroupType=${ud.user_data.group}-${ud.user_data.servertype}" --tag "ServerType=${ud.user_data.servertype}"
+    local_action: shell euca-create-tags $ec2_id --tag "Name=${ud.user_data.group}-${ud.user_data.name}" --tag "Group=${ud.user_data.group}" --tag "GroupType=${ud.user_data.group}-${ud.user_data.servertype}" --tag "ServerType=${ud.user_data.servertype}" --tag "Deployment=${deployment}"
