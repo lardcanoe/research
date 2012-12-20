@@ -1,2 +1,2 @@
 ---
-dbpassword: mysupersecretproductionpassword
+dbpassword: "mysupersecretproductionpassword"

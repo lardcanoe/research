@@ -1,3 +1,4 @@
 ---
-dbname: myapp
-dbuser: django
+dbname: "myapp"
+dbuser: "django"
+dbport: 5432

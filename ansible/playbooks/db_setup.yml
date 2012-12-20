@@ -15,6 +15,9 @@
       - libpq-dev
       - python-psycopg2
 
+  - name: Allow access to internal hosts
+    action: shell sed -ie "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/9.1/main/postgresql.conf
+
 - hosts: tag_GroupType_${grp_name}-db
   user: ubuntu
   sudo: True

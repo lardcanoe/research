@@ -11,93 +11,42 @@
     - [ "../vars/app_${deployment}.yml" ]
 
   tasks:
-  - name: Stop | services
-    action: service name=${item} state=stopped
-    with_items:
-    - nginx
-    - uwsgi
-
-  - name: Install | dependencies
-    action: apt pkg=$item state=installed
-    with_items:
-    - python-software-properties
-    - python-pip
-    - git
-    - uwsgi
-    - uwsgi-plugin-python
-
   - name: Add | nginx repo
     action: apt_repository repo=ppa:nginx/stable state=present
 
   - name: Update | apt repo
-    action: command /usr/bin/apt-get update
+    command: /usr/bin/apt-get update
 
-  - name: Install | nginx
-    action: apt pkg=nginx state=installed
+  - name: Install | apt-get dependencies
+    action: apt pkg=$item state=installed
+    with_items:
+    - python-software-properties
+    - python-pip
+    - python-dev
+    - git
+    - uwsgi
+    - uwsgi-plugin-python
+    - libpq-dev
+    - nginx
+
+  - name: Install | pip dependencies
+    action: pip name=${item}
+    with_items:
+    - psycopg2
+    - django
+    - bottle
 
   - name: Write | nginx.conf
     action: template src=../templates/nginx.j2 dest=/etc/nginx/nginx.conf
-    #notify:
-    #- Restart | nginx
 
   - name: Copy | uwsgi
     action: copy src=../config/uwsgi.conf dest=/etc/init/uwsgi.conf
 
   - name: Reload | init
-    action: command initctl reload-configuration
+    command: initctl reload-configuration
 
   - name: Enforce | python27 for uwsgi
-    action: command update-alternatives --set uwsgi /usr/bin/uwsgi_python27
-
-  - name: Copy | nginx myapp
-    action: copy src=../config/myapp.conf dest=/etc/nginx/sites-enabled/myapp.conf
+    command: update-alternatives --set uwsgi /usr/bin/uwsgi_python27
 
   - name: Delete | default nginx site
     action: file path=/etc/nginx/sites-enabled/default state=absent
-
-#  - name: Obtain | user_data
-#    action: userdata
-#    register: ud
-
-#  - name: Install | Web templates
-#    action: template src=../templates/index.j2 dest=/var/www/ec2.html
-
-  - name: Create | /opt/research
-    action: file path=/opt/research state=directory
-
-  - name: Copy | git repo
-    action: git repo=git://github.com/lardcanoe/research.git dest=/opt/research version=HEAD
-
-  - name: Install | django and bottle
-    action: pip name=${item}
-    with_items:
-    - django
-    - bottle
-
-  - name: Create | /var/www
-    action: file path=/var/www state=directory owner=ubuntu group=ubuntu
-
-  - name: Copy | static
-    local_action: command rsync -a -e "ssh -i /root/.ssh/${grp_name}.pem" ../website/ ubuntu@${inventory_hostname}:/var/www
-
-  - name: Create | /opt/apps/
-    action: file path=/opt/apps/ state=directory owner=ubuntu group=ubuntu
-
-  - name: Create | /opt/apps/test/
-    action: file path=/opt/apps/test/ state=directory owner=ubuntu group=ubuntu
-
-  - name: Copy | uwsgi myapp
-    action: copy src=../config/myapp.xml dest=/opt/apps/test/myapp.xml
-
-  - name: Copy | django_site
-    local_action: command rsync -a -e "ssh -i /root/.ssh/${grp_name}.pem" ../django_site/ ubuntu@${inventory_hostname}:/opt/apps/test
-
-  - name: Start | services
-    action: service name=${item} state=started
-    with_items:
-    - uwsgi
-    - nginx
-
-  handlers:
-  - name: Restart | nginx
-    action: service name=nginx state=restarted

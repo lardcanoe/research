@@ -21,10 +21,10 @@
     action: file path=/var/www state=directory owner=ubuntu group=ubuntu
 
   - name: Copy | static
-    local_action: command rsync -a -e "ssh -i /root/.ssh/${grp_name}.pem" ../website/ ubuntu@${inventory_hostname}:/var/www
+    local_action: command rsync -a -e "ssh -i /root/.ssh/${grp_name}.pem -o 'StrictHostKeyChecking no'" ../website/ ubuntu@${inventory_hostname}:/var/www
 
   - name: Copy | django_site
-    local_action: command rsync -a -e "ssh -i /root/.ssh/${grp_name}.pem" ../django_site/ ubuntu@${inventory_hostname}:/opt/apps/test
+    local_action: command rsync -a -e "ssh -i /root/.ssh/${grp_name}.pem -o 'StrictHostKeyChecking no'" ../django_site/ ubuntu@${inventory_hostname}:/opt/apps/test
 
   - name: Start | services
     action: service name=${item} state=started
