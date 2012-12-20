@@ -1,0 +1,76 @@
+---
+- hosts:
+  - tag_GroupType_${grp_name}-db
+  user: ubuntu
+  sudo: True
+  connection: paramiko
+  gather_facts: false
+
+  tasks:
+  - name: Determine | db hostname
+    local_action: shell echo ${inventory_hostname} > /tmp/db_host
+
+- hosts:
+  - tag_GroupType_${grp_name}-app
+  user: ubuntu
+  sudo: True
+  connection: paramiko
+  gather_facts: false
+
+  vars_files:
+    - "../vars/app_common.yml"
+    - "../vars/db_common.yml"
+    - [ "../vars/app_${deployment}.yml" ]
+    - [ "../vars/db_${deployment}.yml" ]
+
+  tasks:
+  - name: Read | db host from previous section (this is a hack)
+    local_action: command cat /tmp/db_host
+    register: dbhost
+
+  - name: Stop | services
+    action: service name=${item} state=stopped
+    with_items:
+    - nginx
+    - uwsgi
+    ignore_errors: True
+
+  #TODO: really should be made in sites_available and them symlinked
+  - name: Copy | nginx myapp
+    action: copy src=../config/myapp.conf dest=/etc/nginx/sites-enabled/myapp.conf
+
+  - name: Create | /opt/research
+    action: file path=/opt/research state=directory
+
+  - name: Copy | git repo
+    action: git repo=git://github.com/lardcanoe/research.git dest=/opt/research version=HEAD
+
+  - name: Create | /var/www
+    action: file path=/var/www state=directory owner=ubuntu group=ubuntu
+
+  - name: Copy | static
+    local_action: command rsync -a -e "ssh -i /root/.ssh/${grp_name}.pem -o 'StrictHostKeyChecking no'" ../website/ ubuntu@${inventory_hostname}:/var/www
+
+  - name: Create | /opt/apps/
+    action: file path=/opt/apps/ state=directory owner=ubuntu group=ubuntu
+
+  - name: Create | /opt/apps/test/
+    action: file path=/opt/apps/test/ state=directory owner=ubuntu group=ubuntu
+
+  - name: Copy | uwsgi myapp
+    action: copy src=../config/myapp.xml dest=/opt/apps/test/myapp.xml
+
+  - name: Copy | django_site
+    local_action: command rsync -a -e "ssh -i /root/.ssh/${grp_name}.pem -o 'StrictHostKeyChecking no'" ../django_site/ ubuntu@${inventory_hostname}:/opt/apps/test
+
+  - name: Template | myapp settings
+    action: template src=../templates/myapp_settings.py.j2 dest=/opt/apps/test/myapp/settings.py
+
+  - name: Sync | myapp db
+    action: command python manage.py syncdb chdir=/opt/apps/test
+
+  - name: Start | services
+    action: service name=${item} state=started
+    with_items:
+    - uwsgi
+    - nginx

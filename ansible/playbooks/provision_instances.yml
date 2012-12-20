@@ -4,15 +4,11 @@
   connection: local
   gather_facts: False
 
-  vars:
-    instance_type: t1.micro
-    image: ami-cdc072a4
-
   tasks:
   - name: Create New Security Group
     command: euca-add-group -d "${grp_name}" "${grp_name}"
 
-  #When euca-authorize can handle using SG, then switch
+  #TODO When euca-authorize can handle using SG, then switch
   #- name: Get ID of New Security Group
   #  action: shell euca-describe-group "${grp_name}" | awk -F'\t' '{ print $2 }'
   #  register: shellresult
@@ -28,13 +24,13 @@
     - { port: 5432, subnet: "10.0.0.0/8" }
     #- { port: 5432, subnet: "${shellresult.stdout}" }
 
-  - action: file dest="~/.ssh/${grp_name}.pem" state=absent
+  - action: file dest=~/.ssh/${grp_name}.pem state=absent
 
   - name: Create New Key Pair
     action: shell euca-add-keypair ${grp_name} > ~/.ssh/${grp_name}.pem
 
   - name: Lock Key Pair
-    action: shell chmod 0600 ~/.ssh/${grp_name}.pem
+    action: file path=~/.ssh/${grp_name}.pem mode=0600
 
   - name: Add Key Pair to SSH
     action: shell ssh-add ~/.ssh/${grp_name}.pem
@@ -43,11 +39,11 @@
     local_action: ec2
         keypair=${grp_name}
         group=${grp_name}
-        instance_type=${instance_type}
-        image=${image}
+        instance_type=${item.instance}
+        image=${item.image}
         wait=true
         user_data='{"servertype":"${item.type}","group":"${grp_name}","name":"${item.name}"}'
     with_items:
-      - { name: app1, type: app }
-      - { name: app2, type: app }
-      - { name: db1, type: db }
+      - { name: app1, type: app, instance: t1.micro, image: ami-cdc072a4 }
+      - { name: app2, type: app, instance: t1.micro, image: ami-cdc072a4 }
+      - { name: db1, type: db, instance: t1.micro, image: ami-cdc072a4 }
