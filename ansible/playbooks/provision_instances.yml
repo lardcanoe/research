@@ -4,6 +4,9 @@
   connection: local
   gather_facts: False
 
+  vars_files:
+    - "../vars/global.yml"
+
   tasks:
   - name: Create New Security Group
     command: euca-add-group -d "${grp_name}" "${grp_name}"
@@ -24,16 +27,16 @@
     - { port: 5432, subnet: "10.0.0.0/8" }
     #- { port: 5432, subnet: "${shellresult.stdout}" }
 
-  - action: file dest=~/.ssh/${grp_name}.pem state=absent
+  - action: file dest=${privkey} state=absent
 
   - name: Create New Key Pair
-    action: shell euca-add-keypair ${grp_name} > ~/.ssh/${grp_name}.pem
+    action: shell euca-add-keypair ${grp_name} > ${privkey}
 
   - name: Lock Key Pair
-    action: file path=~/.ssh/${grp_name}.pem mode=0600
+    action: file path=${privkey} mode=0600
 
   - name: Add Key Pair to SSH
-    action: shell ssh-add ~/.ssh/${grp_name}.pem
+    action: shell ssh-add ${privkey}
 
   - name: Launch New Server Instances
     local_action: ec2

@@ -4,6 +4,9 @@
   user: ubuntu
   gather_facts: False
 
+  vars_files:
+    - "../vars/global.yml"
+
   tasks:
    - name: Output Instance Info
      local_action: debug msg="Terminating Instance [$ec2_tag_Name] ($ec2_id)"

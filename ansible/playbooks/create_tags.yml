@@ -4,6 +4,9 @@
   user: ubuntu
   gather_facts: False
 
+  vars_files:
+    - "../vars/global.yml"
+
   tasks:
   - name: Obtain user_data from EC2
     action: userdata

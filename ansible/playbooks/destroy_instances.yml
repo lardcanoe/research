@@ -4,12 +4,15 @@
   connection: local
   gather_facts: False
 
+  vars_files:
+    - "../vars/global.yml"
+
   tasks:
   - name: Delete Security Group
     action: shell euca-delete-group "${grp_name}"
 
   - name: Delete Private Key
-    action: file dest="~/.ssh/${grp_name}.pem" state=absent
+    action: file dest=${privkey} state=absent
 
   - name: Delete Key Pair
     action: shell euca-delete-keypair ${grp_name}

@@ -6,6 +6,9 @@
   connection: paramiko
   gather_facts: false
 
+  vars_files:
+    - "../vars/global.yml"
+
   tasks:
   - name: Determine | db hostname
     local_action: shell echo ${inventory_hostname} > /tmp/db_host
@@ -18,6 +21,7 @@
   gather_facts: false
 
   vars_files:
+    - "../vars/global.yml"
     - "../vars/app_common.yml"
     - "../vars/db_common.yml"
     - [ "../vars/app_${deployment}.yml" ]
@@ -35,9 +39,14 @@
     - uwsgi
     ignore_errors: True
 
-  #TODO: really should be made in sites_available and them symlinked
   - name: Copy | nginx myapp
-    action: copy src=../config/myapp.conf dest=/etc/nginx/sites-enabled/myapp.conf
+    action: copy src=../config/myapp.conf dest=/etc/nginx/sites-available/myapp.conf
+
+  - name: Delete | nginx myapp if present, since we can't convert to link
+    action: file path=/etc/nginx/sites-enabled/myapp.conf state=absent
+
+  - name: Symlink | nginx myapp
+    action: file src=/etc/nginx/sites-available/myapp.conf dest=/etc/nginx/sites-enabled/myapp.conf state=link
 
   - name: Create | /opt/research
     action: file path=/opt/research state=directory
@@ -49,7 +58,7 @@
     action: file path=/var/www state=directory owner=ubuntu group=ubuntu
 
   - name: Copy | static
-    local_action: command rsync -a -e "ssh -i /root/.ssh/${grp_name}.pem -o 'StrictHostKeyChecking no'" ../website/ ubuntu@${inventory_hostname}:/var/www
+    local_action: command rsync -a -e "ssh -i ${privkey} -o 'StrictHostKeyChecking no'" ../website/ ubuntu@${inventory_hostname}:/var/www
 
   - name: Create | /opt/apps/
     action: file path=/opt/apps/ state=directory owner=ubuntu group=ubuntu
@@ -61,13 +70,18 @@
     action: copy src=../config/myapp.xml dest=/opt/apps/test/myapp.xml
 
   - name: Copy | django_site
-    local_action: command rsync -a -e "ssh -i /root/.ssh/${grp_name}.pem -o 'StrictHostKeyChecking no'" ../django_site/ ubuntu@${inventory_hostname}:/opt/apps/test
+    local_action: command rsync -a -e "ssh -i ${privkey} -o 'StrictHostKeyChecking no'" ../django_site/ ubuntu@${inventory_hostname}:/opt/apps/test
 
   - name: Template | myapp settings
     action: template src=../templates/myapp_settings.py.j2 dest=/opt/apps/test/myapp/settings.py
 
-  - name: Sync | myapp db
-    action: command python manage.py syncdb chdir=/opt/apps/test
+  - name: Get | userdatadir
+    action: userdata
+    register: ud
+
+  - name: Sync | myapp db from app1
+    action: command python manage.py syncdb --noinput chdir=/opt/apps/test
+    when_string: ${ud.user_data.name} == 'app1'
 
   - name: Start | services
     action: service name=${item} state=started

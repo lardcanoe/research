@@ -1,0 +1,3 @@
+---
+sshfolder: "/root/.ssh"
+privkey: ${sshfolder}/${grp_name}.pem
