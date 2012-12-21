@@ -25,7 +25,9 @@
     - { port: 443,  subnet: "0.0.0.0/0" }
     - { port: 8080, subnet: "0.0.0.0/0" }
     - { port: 5432, subnet: "10.0.0.0/8" }
+    - { port: 5099, subnet: "10.0.0.0/8" }
     #- { port: 5432, subnet: "${shellresult.stdout}" }
+    #5099 is for fireball mode
 
   - action: file dest=${privkey} state=absent
 
