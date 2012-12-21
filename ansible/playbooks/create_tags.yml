@@ -1,6 +1,6 @@
 ---
-- hosts:
-  - key_${grp_name}
+- name: Create VM tags in EC2
+  hosts: key_${grp_name}
   user: ubuntu
   gather_facts: False
 

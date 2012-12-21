@@ -1,9 +1,17 @@
 ---
-- hosts:
-  - tag_GroupType_${grp_name}-app
+- name: Set up the fireball transport
+  hosts: tag_GroupType_${grp_name}-app
+  gather_facts: False
+  connection: paramiko
   user: ubuntu
   sudo: True
-  connection: paramiko
+
+  tasks:
+  - action: fireball
+
+- name: Update MyApp
+  hosts: tag_GroupType_${grp_name}-app
+  connection: fireball
   gather_facts: false
 
   vars_files:
@@ -26,6 +34,14 @@
 
   - name: Copy | django_site
     local_action: command rsync -a -e "ssh -i ${privkey} -o 'StrictHostKeyChecking no'" ../django_site/ ubuntu@${inventory_hostname}:/opt/apps/test
+
+  - name: Get | userdatadir
+    action: userdata
+    register: ud
+
+  - name: Sync | myapp db from app1
+    action: command python manage.py syncdb --noinput chdir=/opt/apps/test
+    when_string: ${ud.user_data.name} == 'app1'
 
   - name: Start | services
     action: service name=${item} state=started

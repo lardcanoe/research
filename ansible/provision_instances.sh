@@ -25,6 +25,8 @@ privkey="${HOME}/.ssh/$gname.pem"
 
 ansible-playbook ./playbooks/create_tags.yml --private-key "$privkey" --extra-vars "grp_name=$gname deployment=$deployment"
 
+ansible-playbook ./playbooks/install_fireball.yml --private-key "$privkey" --extra-vars "grp_name=$gname deployment=$deployment"
+
 ansible-playbook ./playbooks/app_setup.yml --private-key "$privkey" --extra-vars "grp_name=$gname deployment=$deployment"
 
 ansible-playbook ./playbooks/db_setup.yml --private-key "$privkey" --extra-vars "grp_name=$gname deployment=$deployment"

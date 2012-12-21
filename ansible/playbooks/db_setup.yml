@@ -1,7 +1,17 @@
 ---
-- hosts: tag_GroupType_${grp_name}-db
+- name: Set up the fireball transport
+  hosts: tag_GroupType_${grp_name}-db
+  gather_facts: False
+  connection: paramiko
   user: ubuntu
   sudo: True
+
+  tasks:
+  - action: fireball
+
+- name: Setup DB
+  hosts: tag_GroupType_${grp_name}-db
+  connection: fireball
   gather_facts: False
 
   vars:
@@ -31,11 +41,14 @@
   - name: Restart | postgresql
     action: service name=postgresql state=restarted
 
-- hosts: tag_GroupType_${grp_name}-db
-  user: ubuntu
-  sudo: True
-  sudo_user: postgres
+#This runs in its own section because we are now using the postgres user
+- name: Create DB and User
+  hosts: tag_GroupType_${grp_name}-db
   gather_facts: False
+  connection: paramiko
+  user: ubuntu
+  sudo_user: postgres
+  sudo: True
 
   vars_files:
     - "../vars/global.yml"

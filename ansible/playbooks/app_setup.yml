@@ -1,9 +1,17 @@
 ---
-- hosts:
-  - tag_GroupType_${grp_name}-app
+- name: Set up the fireball transport
+  hosts: tag_GroupType_${grp_name}-app
+  gather_facts: False
+  connection: paramiko
   user: ubuntu
   sudo: True
-  connection: paramiko
+
+  tasks:
+  - action: fireball
+
+- name: Setup App Servers
+  hosts: tag_GroupType_${grp_name}-app
+  connection: fireball
   gather_facts: false
 
   vars_files:

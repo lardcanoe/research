@@ -1,23 +1,26 @@
 ---
-- hosts:
-  - tag_GroupType_${grp_name}-db
+- name: Set up the fireball transport
+  hosts: tag_Group_${grp_name}
+  gather_facts: False
+  connection: paramiko
   user: ubuntu
   sudo: True
-  connection: paramiko
-  gather_facts: false
 
-  vars_files:
-    - "../vars/global.yml"
+  tasks:
+  - action: fireball
+
+- name: Gather DB Hostname
+  hosts: tag_GroupType_${grp_name}-db
+  connection: fireball
+  gather_facts: false
 
   tasks:
   - name: Determine | db hostname
     local_action: shell echo ${inventory_hostname} > /tmp/db_host
 
-- hosts:
-  - tag_GroupType_${grp_name}-app
-  user: ubuntu
-  sudo: True
-  connection: paramiko
+- name: Setup MyApp
+  hosts: tag_GroupType_${grp_name}-app
+  connection: fireball
   gather_facts: false
 
   vars_files:
