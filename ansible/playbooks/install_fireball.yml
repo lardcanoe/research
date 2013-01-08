@@ -7,6 +7,9 @@
   connection: paramiko
 
   tasks:
+  - name: Update | apt repo
+    command: /usr/bin/apt-get update
+
   - action: apt pkg=$item state=installed
     with_items:
     - python-software-properties
